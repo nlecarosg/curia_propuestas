@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nlecarosg/curia_propuestas/blob/main/esquema/propuesta.schema.json",
+  "title": "Front matter de una propuesta",
+  "description": "Encabezado YAML de una propuesta de ley o de acción pública de Curia Propuestas. El cuerpo de la moción no forma parte de este esquema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "titulo",
+    "tipo",
+    "estado",
+    "autores",
+    "fecha",
+    "normas_relacionadas",
+    "kpis_relacionados",
+    "historial_adopcion",
+    "ejemplo"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^PROP-[0-9]{4}-[0-9]{3,}$",
+      "description": "Identificador estable. No cambia al indicarse la propuesta."
+    },
+    "titulo": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 280,
+      "description": "Título de la propuesta, el mismo que encabeza el cuerpo."
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["nueva", "derogación"],
+      "description": "nueva: proyecto de ley o acción pública. derogación: propone eliminar una norma vigente."
+    },
+    "estado": {
+      "type": "string",
+      "enum": ["borrador", "publicada", "adoptada", "retirada"]
+    },
+    "autores": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nombre", "tipo"],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "tipo": {
+            "type": "string",
+            "enum": ["bot", "persona"]
+          }
+        }
+      }
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de la versión vigente del texto, en formato AAAA-MM-DD."
+    },
+    "normas_relacionadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "titulo", "enlace", "relacion"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "titulo": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 300
+          },
+          "enlace": {
+            "type": "string",
+            "pattern": "^https://[A-Za-z0-9.-]+(?:/\\S*)?$",
+            "description": "URL https con dominio. La validación no abre el enlace."
+          },
+          "relacion": {
+            "type": "string",
+            "enum": ["modifica", "complementa", "deroga", "cita"]
+          }
+        }
+      }
+    },
+    "kpis_relacionados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "descripcion"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "descripcion": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "historial_adopcion": {
+      "type": "array",
+      "description": "Actos de legisladores reales. No registra pull requests de este repositorio.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fecha", "legislador", "cargo", "accion"],
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "legislador": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160
+          },
+          "cargo": {
+            "type": "string",
+            "enum": ["diputado", "diputada", "senador", "senadora"]
+          },
+          "accion": {
+            "type": "string",
+            "enum": [
+              "presentada",
+              "patrocinada",
+              "indicada",
+              "aprobada",
+              "rechazada",
+              "retirada"
+            ]
+          },
+          "referencia": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "enlace": {
+            "type": "string",
+            "pattern": "^https://[A-Za-z0-9.-]+(?:/\\S*)?$",
+            "description": "URL https con dominio. La validación no abre el enlace."
+          }
+        }
+      }
+    },
+    "ejemplo": {
+      "type": "boolean",
+      "description": "Verdadero solo en archivos de formato marcados con el prefijo EJEMPLO-. No son propuestas adoptables."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tipo": { "const": "derogación" }
+        },
+        "required": ["tipo"]
+      },
+      "then": {
+        "properties": {
+          "normas_relacionadas": {
+            "minItems": 1,
+            "contains": {
+              "type": "object",
+              "required": ["relacion", "enlace"],
+              "properties": {
+                "relacion": { "const": "deroga" },
+                "enlace": {
+                  "type": "string",
+                  "pattern": "^https://github\\.com/nlecarosg/curia_normativas(?:[/?#].*)?$"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

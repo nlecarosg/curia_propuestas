@@ -1,0 +1,35 @@
+# Comprueba el front matter de las propuestas. No despliega ni revisa el cuerpo.
+name: Validar front matter
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validar-front-matter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    name: Propuestas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Obtener el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r herramientas/requirements.txt
+
+      - name: Validar el front matter de las propuestas
+        run: python herramientas/validar_propuestas.py
+
+      - name: Probar que un front matter inválido falla
+        run: python herramientas/test_validar.py -v
